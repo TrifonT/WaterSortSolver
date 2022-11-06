@@ -15,10 +15,10 @@ main()
 	// Generate an initial random state
 	state st = game.random_state(123);
 	
-  // Initialize parent node
+  	// Initialize the parent node
 	node initial(st, nullptr);
 
-	// Solve the state and get the solution
+	// Find the solution
 	node sol = game.solve(initial);
 
 	// Print all the steps to solution
