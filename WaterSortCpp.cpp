@@ -8,7 +8,12 @@
 
 using namespace std;
 
-typedef vector<char> bottle;
+class bottle : public vector<char>
+{
+public:
+	int order = 0; // position of the bottle in a state
+};
+
 typedef vector<bottle> state;
 
 /// <summary>
@@ -17,15 +22,14 @@ typedef vector<bottle> state;
 /// </summary>
 class node
 {
-
 public:
 	state st;	// The state of the node (bottles and their content)
 	int g;		// Generation
-	int h;		// Heuristic estimation of steps to solution
+	int h;		// Heuristic estimation of number of steps to reach solution
 	const node* parent;
 
 	/// <summary>
-	/// Constructor of the new node
+	/// Constructor
 	/// </summary>
 	node(state state, const node* p) : st(state), parent(p)
 	{
@@ -39,7 +43,8 @@ public:
 	}
 
 	/// <summary>
-	/// Computation of heuristic distance to solution
+	/// Computation of a heuristic distance to the solution
+	/// (number of steps needed)
 	/// </summary>
 	void compute_h()
 	{
@@ -62,7 +67,6 @@ public:
 	}
 };
 
-
 /// <summary>
 /// Node comparer. Comparison is by their f value, then by distance and then by their states
 /// </summary>
@@ -83,14 +87,13 @@ struct ncomp
 	}
 };
 
-
 /// <summary>
 /// Represents a game setting, e.g. number of colors, height of each bottle,
 /// number of empty bottles
 /// </summary>
 class game
 {
-	static string alphabet; 
+	static string alphabet;
 
 	int _t;	// Number of total bottles
 	int _n; // Number of filled bottles
@@ -131,6 +134,7 @@ public:
 		for (int i = 0; i < _n; i++)
 		{
 			bottle b;
+			b.order = i;
 			for (int j = 0; j < _h; j++)
 			{
 				b.push_back(chars[idx++]);
@@ -139,10 +143,59 @@ public:
 		}
 		for (int i = 0; i < _k; i++)
 		{
-			state.push_back(bottle());
+			bottle b;
+			b.order = _n + i;
+			state.push_back(b);
 		}
 		sort(state.begin(), state.end());
 		return state;
+	}
+
+	/// <summary>
+	/// Returns a string representation of a node
+	/// </summary>
+	/// <param name="start">The node to convert to a string</param>
+	/// <returns>A string for the node state, generation and heuristic distance</returns>
+	string node_to_string(const node& n)
+	{
+		state stc(n.st);
+		// We sort bottles according to their initial order
+		sort(stc.begin(), stc.end(), [&](bottle a, bottle b) {return a.order < b.order; });
+
+		ostringstream ostr;
+		ostr << '|';
+		for (int i = 0; i < _t; i++)
+		{
+			for (int j = 0; j < _h; j++)
+			{
+				if (j < stc[i].size())
+					ostr << stc[i][j];
+				else
+					ostr << " ";
+			}
+			ostr << '|';
+		}
+		ostr.width(3);
+		ostr << n.g;
+		ostr.width(3);
+		ostr << n.h;
+		return ostr.str();
+	}
+
+	/// <summary>
+	/// Builds recursively a string representation of a node 
+	/// together with all its anchestor nodes
+	/// </summary>
+	string get_history(const node& n)
+	{
+		if (n.parent == nullptr)
+		{
+			return node_to_string(n);
+		}
+		else
+		{
+			return get_history(*n.parent) + "\n" + node_to_string(n);
+		}
 	}
 
 	/// <summary>
@@ -201,70 +254,35 @@ public:
 	}
 
 	/// <summary>
-	/// Returns a string representation of a node
-	/// </summary>
-	/// <param name="start">The node to convert to a string</param>
-	/// <returns>A string for the node state, generation and heuristic distance</returns>
-	string node_to_string(const node& n)
-	{
-		ostringstream ostr;
-		ostr << '|';
-		for (int i = 0; i < _t; i++)
-		{
-			for (int j = 0; j < _h; j++)
-			{
-				if (j < n.st[i].size())
-					ostr << n.st[i][j];
-				else
-					ostr << " ";
-			}
-			ostr << '|';
-		}
-		ostr.width(3);
-		ostr << n.g;
-		ostr.width(3);
-		ostr << n.h;
-		return ostr.str();
-	}
-
-	/// <summary>
-	/// Builds recursively a string representation of a node 
-	/// together with all its parent nodes
-	/// </summary>
-	string get_history(const node& n)
-	{
-		if (n.parent == nullptr)
-		{
-			return node_to_string(n);
-		}
-		else
-		{
-			return get_history(*n.parent) + "\n" + node_to_string(n);
-		}
-	}
-
-	/// <summary>
-	/// Solves a Water Sort problem 
+	/// Solves a Water Sort problem using an a* like algorithm
 	/// </summary>
 	node solve(node start)
 	{
+		// put initial node in open set
 		open.insert(start);
 		while (open.size() > 0)
 		{
+			// nodes in the open set are sorted by their f=g+h value
+			// here we get the node with the lower f value
 			auto it = open.begin();
-			node n = *it;
+			node n = *it;			
 			open.erase(it);
 
 			// we have reached a solution!
 			if (n.h == 0)
 				return n;
 
+			// insert the node in the closed set
 			auto p = closed.insert(n);
+			// if insertion was successful
 			if (p.second)
 			{
+				// get a reference of the node in its new location
 				auto& parent = *p.first;
 				vector<node> children = get_child_nodes(parent);
 
+				// insert each child node in the open set 
+				// if inclusion checks are met
 				for (node& item : children)
 				{
 					if (check_skip(open, item))
@@ -275,23 +293,23 @@ public:
 				}
 			}
 		}
-		// return a node with an empty state to indicate
+		// return a node with an empty state in order to indicate
 		// that the problem is unsolved
 		return node(state(), nullptr);
 	}
 };
 
-// Extend this if you plan to use more than 16 colors
-string game::alphabet = "0123456789ABCDEF";
+// Extend this if you plan to use more than 25 colors
+string game::alphabet = "0123456789ABCDEFGHIJKLMNO";
 
 int main()
 {
 	// Initialize a new game with 12 colors, 2 empty bottles
 	// Height of each bottle is 4
-	game game(12, 2, 4);
+	game game(12, 2, 4 );
 
 	// Generate an initial random state
-	state st = game.random_state(123);
+	state st = game.random_state(111);
 	// Initialize parent node
 	node initial(st, nullptr);
 
@@ -301,8 +319,8 @@ int main()
 	// Print the steps 
 	cout << game.get_history(sol) << endl;
 
-	// Uncomment the following section in order to run
-	// the solver several times
+	 //// Uncomment the following section in order to run
+	 //// the solver several times and collect statistics
 
 	//int N = 100;
 	//int c = 0;
@@ -331,6 +349,6 @@ int main()
 	//}
 	//auto end = chrono::high_resolution_clock::now();
 	//chrono::duration<double> d = end - start;
-	//std::cout << "Average steps = " << sum / c << "  Average seconds = " << d.count() / c << endl;
+	//std::cout << "Average steps = " << sum / c << "  Average seconds to solve = " << d.count() / c << endl;
 }
 
