@@ -68,7 +68,7 @@ public:
 };
 
 /// <summary>
-/// Node comparer. Comparison is by their f value, then by distance and then by their states
+/// Node comparer. Comparison is made by their f value, then by distance and then by their states
 /// </summary>
 /// <param name="a">First node to compare</param>
 /// <param name="b">Second node to compare</param>
