@@ -1,7 +1,6 @@
 # WaterSortCpp
 
-This is a simple yet very fast solver for the Water Sort puzzle. It uses the a* algorithm to in order to find a solution. 
-The heuristic function it uses in order to find the distance from the solved state is not perfect, therefore in some rare cases the solution found is not optimal - the one with the fewer steps.
+This is a simple yet very fast solver for the Water Sort puzzle using the a* algorithm.
 
 ## Example usage
 
