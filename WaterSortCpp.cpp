@@ -48,6 +48,8 @@ public:
 	/// </summary>
 	void compute_h()
 	{
+		static map<char, int> m;
+		m.clear();
 		h = 0;
 		for (int i = 0; i < st.size(); i++)
 		{
@@ -58,11 +60,11 @@ public:
 				if (st[i][j] != st[i][j + 1])
 					h++;
 			}
-			for (int k = i + 1; k < st.size(); k++)
-			{
-				if (st[k].size() > 0 && st[i][0] == st[k][0])
-					h++;
-			}
+			m[st[i][0]]++;
+		}
+		for (auto& item : m)
+		{
+			h += item.second - 1;
 		}
 	}
 };
