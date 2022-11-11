@@ -331,8 +331,7 @@ string game::alphabet = "0123456789ABCDEFGHIJKLMNO";
 
 
 int main()
-{
-	
+{	
 	// Initialize a new game with 12 colors, 2 empty bottles
 	// Height of each bottle is 4
 	game game(12, 2, 4);
