@@ -1,4 +1,4 @@
-# WaterSortCpp
+# Water Sort Solver
 
 This is a simple yet very fast solver for the Water Sort puzzle using the a* algorithm.
 
